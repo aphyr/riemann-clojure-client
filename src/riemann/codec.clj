@@ -44,13 +44,19 @@
                             1000)) ;; default
     (when (.hasTtl e)         (.getTtl e))))
 
+(def blacklisted-attributes #{ "tags" "time" "ttl" "metric"})
+
+(defn blacklisted?
+  [^Proto$Attribute a]
+  (blacklisted-attributes (.getKey a)))
+
 (defn decode-pb-event
   [^Proto$Event e]
   (let [event (decode-pb-event-record e)]
     (if (< 0 (.getAttributesCount e))
       (into event (map (fn [^Proto$Attribute a]
                          [(keyword (.getKey a)) (.getValue a)])
-                       (.getAttributesList e)))
+                       (remove blacklisted? (.getAttributesList e))))
       event)))
 
 (defn ^Proto$Event encode-pb-event
